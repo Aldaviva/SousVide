@@ -1,6 +1,7 @@
 ﻿using InTheHand.Bluetooth;
 using KoKo.Events;
 using KoKo.Property;
+using SousVide.Exceptions;
 using System.Text;
 using System.Timers;
 using UnitsNet;
@@ -61,7 +62,7 @@ public class AnovaPrecisionCooker: ISousVide {
     public Property<bool> IsRunning { get; }
 
     /// <summary>
-    /// Instantiate based on a given Bluetooth device without automatically connecting.
+    /// Instantiate based on a given Bluetooth device without automatically connecting. Call <see cref="Connect"/> on this new instance before using it.
     /// </summary>
     /// <param name="device">Bluetooth device (possibly from <see cref="Bluetooth.GetPairedDevicesAsync"/>)</param>
     protected AnovaPrecisionCooker(BluetoothDevice device) {
@@ -81,17 +82,17 @@ public class AnovaPrecisionCooker: ISousVide {
     /// <para>Connect to an Anova Precision Cooker sous vide over Bluetooth. It must already be paired to this computer before calling this method.</para>
     /// </summary>
     /// <param name="deviceId">A unique identifier for the exact device instance you want to reconnect to, based on persisting <see cref="DeviceId"/> from a previous instance; or <c>null</c> to connect to any paired Anova sous vide</param>
-    /// <returns>Instance that can monitor and control the connected sous vide device</returns>
-    /// <exception cref="UnsupportedDevice"></exception>
+    /// <returns>Instance that can monitor and control the connected sous vide device, or <c>null</c> if no paired Anova Precision Cookers were found.</returns>
     public static async Task<AnovaPrecisionCooker?> Create(string? deviceId = null) {
         IReadOnlyCollection<BluetoothDevice> allDevices = await Bluetooth.GetPairedDevicesAsync().ConfigureAwait(false);
-        if (allDevices.FirstOrDefault(dev => dev.Name == DeviceName && (deviceId == null || deviceId == dev.Id)) is { } device) {
-            AnovaPrecisionCooker sousVide = new(device);
-            await sousVide.Connect().ConfigureAwait(false);
-            return sousVide;
-        } else {
-            return null;
-        }
+        try {
+            if (allDevices.FirstOrDefault(dev => dev.Name == DeviceName && (deviceId == null || deviceId == dev.Id)) is { } device) {
+                AnovaPrecisionCooker sousVide = new(device);
+                await sousVide.Connect().ConfigureAwait(false);
+                return sousVide;
+            }
+        } catch (UnsupportedDevice) { } /* return null below */
+        return null;
     }
 
     /// <summary>Connect to this instance over Bluetooth and initialize the state of this client.</summary>
@@ -226,7 +227,6 @@ public class AnovaPrecisionCooker: ISousVide {
         if (disposing) {
             timer.Dispose();
             if (characteristic != null) {
-                characteristic.StopNotificationsAsync();
                 characteristic.CharacteristicValueChanged -= OnResponseReceived;
                 characteristic                            =  null;
             }
@@ -243,5 +243,23 @@ public class AnovaPrecisionCooker: ISousVide {
         Dispose(true);
         GC.SuppressFinalize(this);
     }
+
+#if NETCOREAPP
+    /// <inheritdoc cref="DisposeAsync" />
+    protected virtual async ValueTask DisposeAsyncCore() {
+        if (characteristic != null) {
+            try {
+                await characteristic.StopNotificationsAsync().ConfigureAwait(false);
+            } catch (Exception e) when (e is not OutOfMemoryException) { }
+        }
+        Dispose(true);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync() {
+        await DisposeAsyncCore().ConfigureAwait(false);
+        GC.SuppressFinalize(this);
+    }
+#endif
 
 }

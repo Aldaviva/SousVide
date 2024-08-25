@@ -1,7 +1,7 @@
 ﻿using SousVide;
 
 Console.WriteLine("Connecting to Anova Precision Cooker...");
-using ISousVide? sousVide = await AnovaPrecisionCooker.Create();
+await using ISousVide? sousVide = await AnovaPrecisionCooker.Create();
 if (sousVide is null) {
     Console.WriteLine("No Anova Precision Cooker found. Pair an \"Anova\" Bluetooth device (the pairing code is 0000).");
     return 1;

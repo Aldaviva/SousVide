@@ -7,7 +7,11 @@ namespace SousVide;
 /// <summary>
 /// <para>Cooking device that maintains water at a set temperature so that submerged bagged food's internal temperature will slowly equilibrate to water temperature, allowing for precise, even internal doneness.</para>
 /// </summary>
-public interface ISousVide: IDisposable {
+public interface ISousVide: IDisposable
+#if NETCOREAPP
+    , IAsyncDisposable
+#endif
+{
 
     /// <summary>
     /// <para>The unique ID of this Bluetooth device.</para>
