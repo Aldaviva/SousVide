@@ -14,6 +14,10 @@
         <Company>$(Authors)</Company>
     </PropertyGroup>
 
+    <PropertyGroup Condition="$(RuntimeIdentifier.StartsWith('linux'))">
+        <AssemblyName>$(AssemblyName.ToLower())</AssemblyName>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\SousVide\SousVide.csproj" />
     </ItemGroup>

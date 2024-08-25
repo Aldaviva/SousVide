@@ -2,10 +2,14 @@
 using KoKo.Events;
 using KoKo.Property;
 using SousVide.Exceptions;
+using SousVide.Unfucked.Bluetooth;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Timers;
 using UnitsNet;
 using UnitsNet.Units;
+using BluetoothDevice = SousVide.Unfucked.Bluetooth.BluetoothDevice;
+using GattCharacteristicValueChangedEventArgs = SousVide.Unfucked.Bluetooth.GattCharacteristicValueChangedEventArgs;
 using Timer = System.Timers.Timer;
 
 namespace SousVide;
@@ -24,14 +28,14 @@ public class AnovaPrecisionCooker: ISousVide {
     private static readonly TimeSpan                       DefaultPropertyUpdateInterval = new(0, 0, 1);
     private static readonly IEqualityComparer<Temperature> TemperatureComparer           = new TolerantTemperatureComparer(Temperature.FromDegreesFahrenheit(0.05));
 
-    private readonly SemaphoreSlim    serializeRequestsMutex = new(1);
-    private readonly BluetoothDevice  device;
-    private readonly RemoteGattServer server;
-    private readonly Timer            timer = new(DefaultPropertyUpdateInterval.TotalMilliseconds) { AutoReset = true, Enabled = false };
+    private readonly SemaphoreSlim     serializeRequestsMutex = new(1);
+    private readonly IBluetoothDevice  device;
+    private readonly IRemoteGattServer server;
+    private readonly Timer             timer = new(DefaultPropertyUpdateInterval.TotalMilliseconds) { AutoReset = true, Enabled = false };
 
     private TaskCompletionSource<string>? currentResponseHandler;
-    private GattService?                  service;
-    private GattCharacteristic?           characteristic;
+    private IGattService?                 service;
+    private IGattCharacteristic?          characteristic;
     private TemperatureUnit               temperatureUnit = TemperatureUnit.DegreeFahrenheit;
 
     private volatile bool isConnected;
@@ -65,8 +69,7 @@ public class AnovaPrecisionCooker: ISousVide {
     /// Instantiate based on a given Bluetooth device without automatically connecting. Call <see cref="Connect"/> on this new instance before using it.
     /// </summary>
     /// <param name="device">Bluetooth device (possibly from <see cref="Bluetooth.GetPairedDevicesAsync"/>)</param>
-    protected AnovaPrecisionCooker(BluetoothDevice device) {
-
+    protected internal AnovaPrecisionCooker(IBluetoothDevice device) {
         this.device = device;
         DeviceId    = device.Id;
         server      = device.Gatt;
@@ -83,11 +86,12 @@ public class AnovaPrecisionCooker: ISousVide {
     /// </summary>
     /// <param name="deviceId">A unique identifier for the exact device instance you want to reconnect to, based on persisting <see cref="DeviceId"/> from a previous instance; or <c>null</c> to connect to any paired Anova sous vide</param>
     /// <returns>Instance that can monitor and control the connected sous vide device, or <c>null</c> if no paired Anova Precision Cookers were found.</returns>
+    [ExcludeFromCodeCoverage]
     public static async Task<AnovaPrecisionCooker?> Create(string? deviceId = null) {
-        IReadOnlyCollection<BluetoothDevice> allDevices = await Bluetooth.GetPairedDevicesAsync().ConfigureAwait(false);
+        IReadOnlyCollection<InTheHand.Bluetooth.BluetoothDevice> allDevices = await Bluetooth.GetPairedDevicesAsync().ConfigureAwait(false);
         try {
             if (allDevices.FirstOrDefault(dev => dev.Name == DeviceName && (deviceId == null || deviceId == dev.Id)) is { } device) {
-                AnovaPrecisionCooker sousVide = new(device);
+                AnovaPrecisionCooker sousVide = new(new BluetoothDevice(device));
                 await sousVide.Connect().ConfigureAwait(false);
                 return sousVide;
             }
@@ -97,7 +101,7 @@ public class AnovaPrecisionCooker: ISousVide {
 
     /// <summary>Connect to this instance over Bluetooth and initialize the state of this client.</summary>
     /// <exception cref="UnsupportedDevice">the Bluetooth device has the name <c>Anova</c> but does not expose the required GATT service</exception>
-    protected virtual async Task Connect() {
+    protected internal virtual async Task Connect() {
         if (!isConnected) {
             timer.Enabled = false;
             service       = null;
@@ -114,7 +118,7 @@ public class AnovaPrecisionCooker: ISousVide {
                 ?? throw new UnsupportedDevice(DeviceId, $"Could not find service {ServiceId} in device {device.Name}");
             characteristic = await service.GetCharacteristicAsync(CharacteristicId).ConfigureAwait(false);
 
-            characteristic.CharacteristicValueChanged += OnResponseReceived;
+            characteristic!.CharacteristicValueChanged += OnResponseReceived;
 
             temperatureUnit = await SendRequestAndReceiveResponse("read unit").ConfigureAwait(false) == "f" ? TemperatureUnit.DegreeFahrenheit : TemperatureUnit.DegreeCelsius;
             await UpdateProperties().ConfigureAwait(false);
@@ -132,10 +136,18 @@ public class AnovaPrecisionCooker: ISousVide {
     protected virtual async Task UpdateProperties() {
         try {
             actualTemperature.Value = Temperature.From(double.Parse(await SendRequestAndReceiveResponse("read temp").ConfigureAwait(false)), temperatureUnit);
-        } catch (FormatException) { } catch (OverflowException) { }
+        } catch (FormatException) { }
+#if NETFRAMEWORK
+        catch (OverflowException) { }
+#endif
+
         try {
             desiredTemperature.Value = Temperature.From(double.Parse(await SendRequestAndReceiveResponse("read set temp").ConfigureAwait(false)), temperatureUnit);
-        } catch (FormatException) { } catch (OverflowException) { }
+        } catch (FormatException) { }
+#if NETFRAMEWORK
+        catch (OverflowException) { }
+#endif
+
         isRunning.Value = await SendRequestAndReceiveResponse("status").ConfigureAwait(false) != "stopped";
     }
 

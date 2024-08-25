@@ -29,6 +29,7 @@
         <None Remove="ExceptionAdjustments.txt" />
         <AdditionalFiles Include="ExceptionAdjustments.txt" />
         <None Include="..\Readme.md" Pack="true" PackagePath="\" />
+        <InternalsVisibleTo Include="Tests" />
     </ItemGroup>
 
     <ItemGroup>
