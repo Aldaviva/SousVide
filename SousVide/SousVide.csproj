@@ -36,7 +36,7 @@
         <PackageReference Include="InTheHand.BluetoothLE" Version="4.0.36" />
         <PackageReference Include="KoKo" Version="2.3.0-beta1" />
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
-        <PackageReference Include="UnitsNet" Version="5.56.0" />
+        <PackageReference Include="UnitsNet" Version="5.57.0" />
     </ItemGroup>
 
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true' or '$(Configuration)' == 'Release'">
