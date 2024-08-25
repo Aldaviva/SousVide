@@ -22,12 +22,13 @@
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
-        <!-- <PackageReadmeFile>Readme.md</PackageReadmeFile> -->
+        <PackageReadmeFile>Readme.md</PackageReadmeFile>
     </PropertyGroup>
 
     <ItemGroup>
         <None Remove="ExceptionAdjustments.txt" />
         <AdditionalFiles Include="ExceptionAdjustments.txt" />
+        <None Include="..\Readme.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 
     <ItemGroup>

@@ -1,13 +1,17 @@
 👨🏻‍🍳 SousVide
 ===
 
-[![Nuget](https://img.shields.io/nuget/v/SousVide?logo=nuget)](https://www.nuget.org/packages/SousVide/)
+![price: $0/month](https://img.shields.io/badge/price-%240%2Fmonth-brightgreen) [![Nuget](https://img.shields.io/nuget/v/SousVide?logo=nuget)](https://www.nuget.org/packages/SousVide/)
 
 *Bluetooth client library and protocol specification for the Anova Precision Cooker sous vide.*
 
 <!-- MarkdownTOC autolink="true" bracket="round" autoanchor="false" levels="1,2,3,4" bullets="1.,-,-,-" -->
 
 1. [Background](#background)
+    - [Device](#device)
+    - [Cash Grab](#cash-grab)
+    - [Remote Control Uselessness](#remote-control-uselessness)
+    - [Solutions](#solutions)
 1. [Prerequisites](#prerequisites)
 1. [Usage](#usage)
     - [Bluetooth Pairing](#bluetooth-pairing)
@@ -23,38 +27,43 @@
 
 ## Background
 
-The original [Anova Precision Cooker 1.0](https://www.amazon.com/Anova-Culinary-Precision-Bluetooth-Included/dp/B00UKPBXM4/) is an 800 watt sous vide which was released in 2014. You can control it with either physical on-device inputs or a [phone app](https://play.google.com/store/apps/details?id=com.anovaculinary.android) over Bluetooth Low Energy. Unlike later models, it does not have a Wi-Fi tranceiver. It's a very nice device and it works well.
+### Device
+The original [Anova](https://anovaculinary.com) [Precision Cooker 1.0](https://www.amazon.com/Anova-Culinary-Precision-Bluetooth-Included/dp/B00UKPBXM4/) is an 800 watt sous vide which was released in 2014. You can control it with either physical on-device inputs or a [phone app](https://play.google.com/store/apps/details?id=com.anovaculinary.android) over Bluetooth Low Energy. Unlike later models, it does not have a Wi-Fi transceiver. It's a really nice device with high-quality hardware, and it works very well, even though the API design is questionable.
 
-Unfortunately, Anova [decided to charge users who create an account after 2024-08-21 $2/month or $10/year (USD) to control their sous vides from the phone app](https://www.theverge.com/2024/8/19/24223878/anova-sous-vide-kitchen-app-subscription). They also [decided to remove the existing Bluetooth connectivity from their app on 2025-09-28](https://arstechnica.com/gadgets/2024/08/smart-sous-vide-cooker-to-start-charging-2-month-for-10-year-old-companion-app/), so the only way to use these devices will be with the physical controls. This library and protocol specification were inspired by a reader's objection to this bait-and-switch cash grab:
+### Cash Grab
+Unfortunately, Anova [decided to charge users who create an account after 2024-08-21 $2/month or $10/year (USD) to control their sous vides from the phone app](https://www.theverge.com/2024/8/19/24223878/anova-sous-vide-kitchen-app-subscription). They also [decided to remove the existing Bluetooth connectivity from their app on 2025-09-28](https://arstechnica.com/gadgets/2024/08/smart-sous-vide-cooker-to-start-charging-2-month-for-10-year-old-companion-app/), so the only way to use their non&ndash;Wi-Fi devices will be with the physical controls. This library and protocol specification were inspired by a reader's objection to this bait-and-switch cash grab:
 > Some long-time users have pleaded with the company to think of alternative solutions. For example, a commenter called David, who claimed to own three Anova products, asked if the company could "open source the communication protocols and allow the community to take over."
 > 
 > "I suspect there is a strong overlap between people who own sous vides and developers (me for a start)," David said.
 
+### Remote Control Uselessness
 To be clear, **the ability to remotely control a sous vide is worthless**. There is no advantage to starting, monitoring, or stopping cooking with your phone:
 - It's far clumsier and slower than the physical dial and button located on the sous vide itself.
 - You're going to be near the device when you start it anyway, so you don't need to start it from far away.
-- The cooking with the phone app is not better than with the manual inputs because the only relevant factors are the target water temperature and the signal to begin cooking.
+- Cooking using the phone app is not better than with the manual inputs because the only relevant parameters are the target water temperature and the signal to begin cooking, so the phone app is not smarter.
 - The timer is useless because the entire point of sous vide is that it can run forever, so if you want to know when two hours have elapsed, set a timer on your phone or oven.
 - If you want to sous vide as quickly as possible, the only correct solution is to use a continuous thermometer like the [Thermoworks Dot](https://www.thermoworks.com/dot/).
-- Being able to transfer online "recipes" is a waste of time because they are so simplistic that they just set a useless timer and a target water temperature that you could have easily set yourself, either by looking it up on your [handy temperature guide](https://www.thermoworks.com/content/pdf/chef_recommended_temps.pdf) or a quick web search.
-- There is no reason to check the water temperature remotely, because it will always be at the target temperature thanks to the sous vide running.
+- Being able to transfer online "recipes" is a waste of time because they are so simplistic that they just set a useless timer and a target water temperature, which you could have easily set yourself, either by looking it up on your [handy temperature guide](https://www.thermoworks.com/content/pdf/chef_recommended_temps.pdf) or a quick web search.
+- There is no reason to check the water temperature remotely, because it will always be at the target temperature thanks to the fact that the sous vide is running.
 - There is no reason to change the water temperature set point remotely, because the point of sous vide is using a constant temperature for the entire cooking duration.
 
+### Solutions
 If you *still* want to control your Anova Precision Cooker over Bluetooth after 2025-09-28, you can try the following techniques until one works.
 1. Install an [older version of the app](https://apkpure.com/anova-culinary/com.anovaculinary.android/download/3.5.1) that still has the Bluetooth functionality.
-1. Use the sample app in this repository.
-1. Write your own .NET program using the [client library in this repository](https://www.nuget.org/packages/SousVide/).
+1. Use the [sample program](#command-line-tool) in this repository.
+1. Write your own .NET program using the [client library in this repository](#net-library).
 1. Write your own program in a programming language of your choice by following the [protocol specification](https://github.com/Aldaviva/SousVide/wiki/Communication-Protocol) in this repository.
-1. [Inspect Bluetooth LE traffic](https://github.com/Aldaviva/SousVide/wiki/Bluetooth-Low-Energy-Interception) between your phone and sous vide to understand and implement the GATT communication protocol yourself (it's misguided but simple, just RPC-style string writes and response callbacks used to read and write values and invoke functions).
+1. [Inspect Bluetooth LE traffic](https://github.com/Aldaviva/SousVide/wiki/Bluetooth-Low-Energy-Interception) between your phone and sous vide to understand and implement the GATT communication protocol yourself &mdash; its design is misguided but simple, just RPC-style string writes and response callbacks used to read and write values and invoke functions.
 
 ## Prerequisites
 - Anova sous vide
-    - Tested on a [Precision Cooker 1.0 with Bluetooth](https://www.amazon.com/Anova-Culinary-Precision-Bluetooth-Included/dp/B00UKPBXM4/) (2014)
-- Bluetooth controller
-    - Tested on an [Asus USB-BT400](https://www.asus.com/us/networking-iot-servers/adapters/all-series/usbbt400/) and [Intel AX211](https://ark.intel.com/content/www/us/en/ark/products/204837/intel-wi-fi-6e-ax211-gig.html)
+    - Tested on a [Precision Cooker 1.0 with Bluetooth](https://www.amazon.com/Anova-Culinary-Precision-Bluetooth-Included/dp/B00UKPBXM4/) (2014, `Anova PC`)
+- Bluetooth adapter
+    - Tested on a USB [Asus USB-BT400](https://www.asus.com/us/networking-iot-servers/adapters/all-series/usbbt400/) and onboard [Intel AX211](https://ark.intel.com/content/www/us/en/ark/products/204837/intel-wi-fi-6e-ax211-gig.html)
 - .NET Framework 4.6.2, 6.0, or later
 
 ## Usage
+
 ### Bluetooth Pairing
 1. Plug in the sous vide.
 1. Press its Bluetooth button to enter pairing mode. It will turn blue and start blinking.
@@ -70,15 +79,26 @@ If you *still* want to control your Anova Precision Cooker over Bluetooth after 
 1. Enter the PIN `0000`.
 
 ### Command Line Tool
+This sample program demonstrates Bluetooth connectivity and reference usage of the [library](#net-library).
+
 1. Download the `SousVideCtl` ZIP file for your operating system and CPU architecture from the [latest release](https://github.com/Aldaviva/SousVide/releases/latest).
 1. Extract the ZIP file.
 1. On Linux- and Unix-based operating systems, set the executable bit using `chmod +x sousvidectl`.
+1. Run `./sousvidectl`.
+    ```text
+    Current temperature:  73.0 °F
+    Target temperature:  135.0 °F
 
-TODO
+    Start  ↑↓ Set temperature  Exit
+    ```
+1. Press <kbd>S</kbd> to start and stop the sous vide.
+1. Press <kbd>↑</kbd> and <kbd>↓</kbd> to raise and lower the target temperature.
+1. Press <kbd>X</kbd> to exit.
 
 ### .NET Library
+
 #### Getting Started
-1. In your .NET project, add a depenency on the NuGet package [`SousVide`](https://www.nuget.org/packages/SousVide/).
+1. In your .NET project, add a dependency on the NuGet package [`SousVide`](https://www.nuget.org/packages/SousVide/).
     ```sh
     dotnet add package SousVide
     ```
