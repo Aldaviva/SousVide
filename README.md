@@ -94,9 +94,9 @@ This sample program demonstrates Bluetooth connectivity and reference usage of t
 
     Start  ↑↓ Set temperature  Exit
     ```
-1. Press <kbd>S</kbd> to start and stop the sous vide.
-1. Press <kbd>↑</kbd> and <kbd>↓</kbd> to raise and lower the target temperature.
-1. Press <kbd>X</kbd> to exit.
+1. Press `S` to start and stop the sous vide.
+1. Press `↑` and `↓` to raise and lower the target temperature.
+1. Press `X` to exit.
 
 ### .NET Library
 
@@ -115,11 +115,19 @@ This sample program demonstrates Bluetooth connectivity and reference usage of t
     ```
 1. Call methods, and read or subscribe to [reactive properties](https://www.nuget.org/packages/KoKo), on the `ISousVide` instance.
     ```cs
-    Console.WriteLine($"{(sousVide.IsRunning.Value ? "Running" : "Stopped")}, desired temperature: {sousVide.DesiredTemperature.Value:N1}");
+    Console.WriteLine(sousVide.IsRunning.Value ? "Running" : "Stopped");
+    Console.WriteLine($"Desired temperature: {sousVide.DesiredTemperature.Value:N1}");
+
+    await sousVide.SetDesiredTemperature(Temperature.FromDegreesFahrenheit(135));
+    await sousVide.Start();
+    await Task.Delay(TimeSpan.FromHours(2));
+    await sousVide.Stop();
     ```
 
 #### Application Programming Interface
-`ISousVide` is the public interface of this library. Construct instances by calling `AnovaPrecisionCooker.Create(string?)`.
+`ISousVide` is the public interface of this library.
+
+Construct instances by calling `await AnovaPrecisionCooker.Create(string? deviceId)`. To connect to any paired Precision Cooker, pass `null` to the `deviceId` parameter. To connect to a known previous instance, persist its `DeviceId` property and pass it to the `deviceId` parameter.
 
 ##### `ISousVide.DeviceId`
 The unique ID of this Bluetooth device. Can be persisted and passed to `AnovaPrecisionCooker.Create(string?)` later to reconnect to the exact same device, in case there are multiple paired Precision Cookers.

@@ -5,6 +5,9 @@
 # Usage: <memberId>[ <accessor>] (-/+)<exceptionTypeId>
 # See ECMA-334, 5th Ed. § D.4.2 "ID string format" for a description of the ID format.
 
+# double.Parse(string) can only throw OverflowException in .NET Framework and .NET Core ≤ 2.2
+M:System.Double.Parse(System.String) -T:System.OverflowException
+
 P:System.Lazy`1.Value get -T:System.MemberAccessException
 P:System.Lazy`1.Value get -T:System.MissingMemberException
 M:System.Threading.SemaphoreSlim.Release -T:System.Threading.SemaphoreFullException

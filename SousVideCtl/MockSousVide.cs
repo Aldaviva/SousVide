@@ -41,7 +41,6 @@ public class MockSousVide: ISousVide {
     private void OnTimerTick(object? sender, ElapsedEventArgs e) {
         Temperature ambientTemperature = IsRunning.Value ? DesiredTemperature.Value : RoomTemperature;
         actualTemperature.Value = ((ambientTemperature - ActualTemperature.Value) * 0.01 + actualTemperature.Value).ToUnit(actualTemperature.Value.Unit);
-        // actualTemperature.Value += delta * 0.01;
     }
 
     public Task SetDesiredTemperature(Temperature desiredTemperature) {

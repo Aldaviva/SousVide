@@ -10,10 +10,10 @@ public static class Extensions {
         if (token.IsCancellationRequested) {
             return Task.CompletedTask;
         } else {
-            TaskCompletionSource           completion   = new();
-            CancellationTokenRegistration? registration = null;
+            TaskCompletionSource          completion   = new();
+            CancellationTokenRegistration registration = default;
             registration = token.Register(_ => {
-                registration!.Value.Dispose();
+                registration.Dispose();
                 completion.SetResult();
             }, false);
             return completion.Task;

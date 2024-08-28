@@ -3,6 +3,7 @@ using KoKo.Events;
 using KoKo.Property;
 using SousVide.Exceptions;
 using SousVide.Unfucked.Bluetooth;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Timers;
@@ -20,7 +21,8 @@ namespace SousVide;
 /// </summary>
 public class AnovaPrecisionCooker: ISousVide {
 
-    private const string DeviceName = "Anova";
+    private const string DeviceName             = "Anova";
+    private const string ResponseInvalidCommand = "Invalid Command";
 
     private static readonly Encoding                       Encoding                      = Encoding.ASCII;
     private static readonly BluetoothUuid                  ServiceId                     = BluetoothUuid.FromShortId(0xffe0);
@@ -187,7 +189,9 @@ public class AnovaPrecisionCooker: ISousVide {
     }
 
     private async Task SendCommandInternal(string command) {
-        await characteristic!.WriteValueWithoutResponseAsync(Encoding.GetBytes(command.Trim() + '\r')).ConfigureAwait(false);
+        command = command.Trim();
+        Trace.WriteLine(command, "ble-tx");
+        await characteristic!.WriteValueWithoutResponseAsync(Encoding.GetBytes(command + '\r')).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -196,9 +200,12 @@ public class AnovaPrecisionCooker: ISousVide {
     /// <param name="sender">event emitter</param>
     /// <param name="e">response bytes</param>
     protected virtual void OnResponseReceived(object? sender, GattCharacteristicValueChangedEventArgs e) {
-        if (e.Value is { } value && Encoding.GetString(value).Trim() is var message and not "Invalid Command" && currentResponseHandler != null) {
-            // Console.WriteLine($"<< {message}");
-            currentResponseHandler.TrySetResult(message);
+        if (e.Value is { } value) {
+            string message = Encoding.GetString(value).Trim();
+            Trace.WriteLine(message, "ble-rx");
+            if (message != ResponseInvalidCommand && currentResponseHandler != null) {
+                currentResponseHandler.TrySetResult(message);
+            }
         }
     }
 
@@ -230,9 +237,9 @@ public class AnovaPrecisionCooker: ISousVide {
     }
 
     /// <inheritdoc />
-    public async Task SetDesiredTemperature(Temperature desiredTemperature) {
-        await SendRequestAndReceiveResponse($"set temp {desiredTemperature.As(temperatureUnit):F1}").ConfigureAwait(false);
-        this.desiredTemperature.Value = desiredTemperature;
+    public async Task SetDesiredTemperature(Temperature temperature) {
+        await SendRequestAndReceiveResponse($"set temp {temperature.As(temperatureUnit):F1}").ConfigureAwait(false);
+        desiredTemperature.Value = temperature;
     }
 
     private void onDisconnection(object? sender, EventArgs e) {

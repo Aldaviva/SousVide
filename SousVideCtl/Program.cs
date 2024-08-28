@@ -8,6 +8,9 @@ namespace SousVideCtl;
 public static class Program {
 
     private static readonly CultureInfo CurrentCulture = CultureInfo.CurrentCulture /* = CultureInfo.GetCultureInfo("en-GB")*/;
+    private static readonly string      BrightBlue     = Console2.Color(Console2.Colors.BrightBlue, Console2.Colors.Black);
+    private static readonly string      BrightGreen    = Console2.Color(Console2.Colors.BrightGreen, Console2.Colors.Black);
+    private static readonly string      Reset          = Console2.ResetColor;
 
     private static event EventHandler<ConsoleKeyInfo>? KeyPressed;
 
@@ -29,8 +32,7 @@ public static class Program {
 
         _ = Task.Run(() => {
             while (!cts.IsCancellationRequested) {
-                ConsoleKeyInfo consoleKeyInfo = Console.ReadKey(true);
-                KeyPressed?.Invoke(null, consoleKeyInfo);
+                KeyPressed?.Invoke(null, Console.ReadKey(true));
             }
         }, cts.Token);
 
@@ -54,25 +56,24 @@ public static class Program {
             }
         };
 
-        Console.Write("\x1b[?25l"); // hide cursor
+        Console2.SetCursorVisibility(false);
         Render();
         sousVide.ActualTemperature.PropertyChanged  += OnSousVidePropertyChanged;
         sousVide.DesiredTemperature.PropertyChanged += OnSousVidePropertyChanged;
         sousVide.IsRunning.PropertyChanged          += OnSousVidePropertyChanged;
 
         await cts.Token.Wait();
-        Console.Write("\x1b[?25h"); // show cursor
+        Console2.SetCursorVisibility(true);
         return 0;
     }
 
     private static void Render() {
-        Console.Write("\x1b[1J\x1b[1;1H"); // clear screen and move to top-left position
-        Console.WriteLine("Current temperature: \x1b[94;40m{0,5:N1}\x1b[39;49m {1}", sousVide!.ActualTemperature.Value.Value,
-            Temperature.GetAbbreviation(sousVide.ActualTemperature.Value.Unit, CurrentCulture));
-        Console.WriteLine("Target temperature:  \x1b[94;40m{0,5:N1}\x1b[39;49m {1}", sousVide.DesiredTemperature.Value.Value,
-            Temperature.GetAbbreviation(sousVide.DesiredTemperature.Value.Unit, CurrentCulture));
-        Console.Write("\n{0}  {1}  {2}", sousVide.IsRunning.Value ? "\x1b[92;40mS\x1b[39;49mtop " : "\x1b[92;40mS\x1b[39;49mtart", "\x1b[92;40m↑↓\x1b[39;49m Set temperature",
-            "E\u001b[92;40mx\u001b[39;49mit");
+        Console2.Clear();
+        Console.WriteLine(
+            $"Current temperature: {BrightBlue}{sousVide!.ActualTemperature.Value.Value,5:N1}{Reset} {Temperature.GetAbbreviation(sousVide.ActualTemperature.Value.Unit, CurrentCulture)}");
+        Console.WriteLine(
+            $"Target temperature:  {BrightBlue}{sousVide.DesiredTemperature.Value.Value,5:N1}{Reset} {Temperature.GetAbbreviation(sousVide.DesiredTemperature.Value.Unit, CurrentCulture)}");
+        Console.Write($"\n{(sousVide.IsRunning.Value ? $"{BrightGreen}S{Reset}top " : $"{BrightGreen}S{Reset}tart")}  {BrightGreen}↑↓{Reset} Set temperature  E{BrightGreen}x{Reset}it");
     }
 
     private static void OnSousVidePropertyChanged<T>(object sender, KoKoPropertyChangedEventArgs<T> eventArgs) => Render();
