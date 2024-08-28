@@ -11,7 +11,7 @@ public abstract class SousVideException(string deviceId, string? message, Except
     /// <summary>
     /// The unique ID of this device.
     /// </summary>
-    public string DeviceId { get; init; } = deviceId;
+    public string DeviceId { get; } = deviceId;
 
 }
 

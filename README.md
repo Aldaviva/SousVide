@@ -5,25 +5,28 @@
 
 *Bluetooth client library and protocol specification for the Anova Precision Cooker sous vide.*
 
-<!-- MarkdownTOC autolink="true" bracket="round" autoanchor="false" levels="1,2,3,4" bullets="1.,-,-,-" -->
+<!-- MarkdownTOC autolink="true" bracket="round" autoanchor="false" levels="1,2,3,4" bullets="1." -->
 
 1. [Background](#background)
-    - [Device](#device)
-    - [Cash Grab](#cash-grab)
-    - [Remote Control Uselessness](#remote-control-uselessness)
-    - [Solutions](#solutions)
+    1. [Device](#device)
+    1. [Cash Grab](#cash-grab)
+    1. [Remote Control Uselessness](#remote-control-uselessness)
+    1. [Solutions](#solutions)
 1. [Prerequisites](#prerequisites)
 1. [Usage](#usage)
-    - [Bluetooth Pairing](#bluetooth-pairing)
-    - [Command Line Tool](#command-line-tool)
-    - [.NET Library](#net-library)
-        - [Getting Started](#getting-started)
-        - [Application Programming Interface](#application-programming-interface)
-1. [Communication Protocol Specification](#communication-protocol-specification)
-1. [Bluetooth Inspection](#bluetooth-inspection)
+    1. [Bluetooth Pairing](#bluetooth-pairing)
+    1. [Command Line Tool](#command-line-tool)
+    1. [.NET Library](#net-library)
+        1. [Getting Started](#getting-started)
+        1. [Application Programming Interface](#application-programming-interface)
+1. [Learning](#learning)
+    1. [Communication Protocol Specification](#communication-protocol-specification)
+    1. [Bluetooth Inspection](#bluetooth-inspection)
 1. [Acknowledgements](#acknowledgements)
 
 <!-- /MarkdownTOC -->
+
+![Anova Precision Cooker](https://raw.githubusercontent.com/Aldaviva/SousVide/master/.github/images/readme-header.jpg)
 
 ## Background
 
@@ -52,7 +55,7 @@ If you *still* want to control your Anova Precision Cooker over Bluetooth after 
 1. Install an [older version of the app](https://apkpure.com/anova-culinary/com.anovaculinary.android/download/3.5.1) that still has the Bluetooth functionality.
 1. Use the [sample program](#command-line-tool) in this repository.
 1. Write your own .NET program using the [client library in this repository](#net-library).
-1. Write your own program in a programming language of your choice by following the [protocol specification](https://github.com/Aldaviva/SousVide/wiki/Communication-Protocol) in this repository.
+1. Don't write .NET? No problem. Write your own program in a language of your choice by following the [protocol specification](https://github.com/Aldaviva/SousVide/wiki/Communication-Protocol) in this repository.
 1. [Inspect Bluetooth LE traffic](https://github.com/Aldaviva/SousVide/wiki/Bluetooth-Low-Energy-Interception) between your phone and sous vide to understand and implement the GATT communication protocol yourself &mdash; its design is misguided but simple, just RPC-style string writes and response callbacks used to read and write values and invoke functions.
 
 ## Prerequisites
@@ -145,11 +148,12 @@ Start a countdown timer that will stop cooking after the given duration elapses.
 ##### `ISousVide.StopTimer()`
 Cancels any existing countdown timer that was previously started with [`StartTimer(TimeSpan)`](#isousvidestarttimertimespan).
 
-## Communication Protocol Specification
-See [Communication Protocol](https://github.com/Aldaviva/SousVide/wiki/Communication-Protocol).
+## Learning
+### Communication Protocol Specification
+To learn about the requests and responses for the Anova Bluetooth LE API, see [Communication Protocol](https://github.com/Aldaviva/SousVide/wiki/Communication-Protocol).
 
-## Bluetooth Inspection
-See [Bluetooth Low Energy Interception](https://github.com/Aldaviva/SousVide/wiki/Bluetooth-Low-Energy-Interception).
+### Bluetooth Inspection
+To learn how to inspect traffic between an Android phone and a Bluetooth LE device, see [Bluetooth Low Energy Interception](https://github.com/Aldaviva/SousVide/wiki/Bluetooth-Low-Energy-Interception).
 
 ## Acknowledgements
 - [**Luke Ma**](https://github.com/plluke) for generously giving me an Anova Precision Cooker as a Christmas present in 2020.

@@ -78,7 +78,8 @@ public class AnovaPrecisionCooker: ISousVide {
         DesiredTemperature = desiredTemperature;
         IsRunning          = isRunning;
 
-        timer.Elapsed += UpdatePropertiesVoid;
+        timer.Elapsed                 += UpdatePropertiesVoid;
+        device.GattServerDisconnected += onDisconnection;
     }
 
     /// <summary>
@@ -112,7 +113,7 @@ public class AnovaPrecisionCooker: ISousVide {
             }
 
             await server.ConnectAsync().ConfigureAwait(false);
-            isConnected = true; //TODO track connection state
+            isConnected = true;
 
             service = (await server.GetPrimaryServicesAsync(ServiceId).ConfigureAwait(false)).FirstOrDefault()
                 ?? throw new UnsupportedDevice(DeviceId, $"Could not find service {ServiceId} in device {device.Name}");
@@ -234,6 +235,10 @@ public class AnovaPrecisionCooker: ISousVide {
         this.desiredTemperature.Value = desiredTemperature;
     }
 
+    private void onDisconnection(object? sender, EventArgs e) {
+        isConnected = false;
+    }
+
     /// <inheritdoc cref="Dispose()" />
     protected virtual void Dispose(bool disposing) {
         if (disposing) {
@@ -242,9 +247,10 @@ public class AnovaPrecisionCooker: ISousVide {
                 characteristic.CharacteristicValueChanged -= OnResponseReceived;
                 characteristic                            =  null;
             }
-            service = null;
+            service                       =  null;
+            isConnected                   =  false;
+            device.GattServerDisconnected -= onDisconnection;
             server.Disconnect();
-            isConnected            = false;
             currentResponseHandler = null;
             serializeRequestsMutex.Dispose();
         }

@@ -8,7 +8,7 @@ using GattCharacteristicValueChangedEventArgs = SousVide.Unfucked.Bluetooth.Gatt
 
 namespace Tests;
 
-public class AnovaPrecisionCookerTest {
+public class AnovaPrecisionCookerTest: IDisposable {
 
     private readonly AnovaPrecisionCooker sousVide;
     private readonly IBluetoothDevice     device         = A.Fake<IBluetoothDevice>();
@@ -23,10 +23,10 @@ public class AnovaPrecisionCookerTest {
         A.CallTo(() => service.GetCharacteristicAsync(A<BluetoothUuid>._)).Returns(characteristic);
         sousVide = new AnovaPrecisionCooker(device);
 
-        registerResponse("read unit", "f");
-        registerResponse("read temp", "73.4");
-        registerResponse("read set temp", "135.0");
-        registerResponse("status", "stopped");
+        RegisterResponse("read unit", "f");
+        RegisterResponse("read temp", "73.4");
+        RegisterResponse("read set temp", "135.0");
+        RegisterResponse("status", "stopped");
     }
 
     [Fact]
@@ -39,50 +39,50 @@ public class AnovaPrecisionCookerTest {
         await sousVide.Connect();
         sousVide.IsRunning.Value.Should().BeFalse();
 
-        registerResponse("start", "start");
-        registerResponse("status", "started"); //TODO I don't actually know what this value is yet
+        RegisterResponse("start", "start");
+        RegisterResponse("status", "started"); //TODO I don't actually know what this value is yet
 
         await sousVide.Start();
 
         sousVide.IsRunning.Value.Should().BeTrue();
-        getRequest("start").MustHaveHappened();
+        GetRequest("start").MustHaveHappened();
     }
 
     [Fact]
     public async Task Stop() {
-        registerResponse("status", "started");
+        RegisterResponse("status", "started");
         await sousVide.Connect();
         sousVide.IsRunning.Value.Should().BeTrue();
 
-        registerResponse("stop", "stop");
-        registerResponse("status", "stopped");
+        RegisterResponse("stop", "stop");
+        RegisterResponse("status", "stopped");
 
         await sousVide.Stop();
 
         sousVide.IsRunning.Value.Should().BeFalse();
-        getRequest("stop").MustHaveHappened();
+        GetRequest("stop").MustHaveHappened();
     }
 
     [Fact]
     public async Task SetDesiredTemperature() {
         await sousVide.Connect();
 
-        registerResponse("set temp 145.0", "145.0");
+        RegisterResponse("set temp 145.0", "145.0");
 
         await sousVide.SetDesiredTemperature(Temperature.FromDegreesFahrenheit(145));
 
         sousVide.DesiredTemperature.Value.Should().Be(Temperature.FromDegreesFahrenheit(145));
-        getRequest("set temp 145.0").MustHaveHappened();
+        GetRequest("set temp 145.0").MustHaveHappened();
     }
 
     [Fact]
     public async Task IgnoreUnparsableValues() {
         await sousVide.Connect();
 
-        registerResponse("start", "start");
-        registerResponse("read temp", "abc");
-        registerResponse("read set temp", "def");
-        registerResponse("status", "started");
+        RegisterResponse("start", "start");
+        RegisterResponse("read temp", "abc");
+        RegisterResponse("read set temp", "def");
+        RegisterResponse("status", "started");
 
         await sousVide.Start();
 
@@ -93,12 +93,12 @@ public class AnovaPrecisionCookerTest {
 
     [Fact]
     public async Task StartTimer() {
-        registerResponse("stop time", "stop time");
-        registerResponse("set timer 1", "1");
+        RegisterResponse("stop time", "stop time");
+        RegisterResponse("set timer 1", "1");
         await sousVide.Connect();
 
         await sousVide.StartTimer(TimeSpan.FromMinutes(1));
-        getRequest("set timer 1").MustHaveHappened();
+        GetRequest("set timer 1").MustHaveHappened();
     }
 
     [Fact]
@@ -106,20 +106,50 @@ public class AnovaPrecisionCookerTest {
         await sousVide.Connect();
 
         Func<Task> thrower = async () => await sousVide.StartTimer(TimeSpan.FromSeconds(59));
-        thrower.Should().ThrowAsync<ArgumentOutOfRangeException>();
+        await thrower.Should().ThrowAsync<ArgumentOutOfRangeException>();
     }
 
     [Fact]
     public async Task StopTimer() {
-        registerResponse("stop time", "stop time");
+        RegisterResponse("stop time", "stop time");
         await sousVide.Connect();
 
         await sousVide.StopTimer();
-        getRequest("stop time").MustHaveHappened();
+        GetRequest("stop time").MustHaveHappened();
     }
 
     [Fact]
-    public async Task DisposeAsync() {
+    public void SetPollingInterval() {
+        TimeSpan newInterval = TimeSpan.FromSeconds(2);
+        sousVide.PropertyUpdateInterval.Should().NotBe(newInterval);
+        sousVide.PropertyUpdateInterval = newInterval;
+        sousVide.PropertyUpdateInterval.Should().Be(newInterval);
+    }
+
+    [Fact]
+    public async Task UpdateProperties() {
+        sousVide.PropertyUpdateInterval = TimeSpan.FromMilliseconds(100);
+        await sousVide.Connect();
+
+        TaskCompletionSource polled = new();
+        RegisterResponse("status", "stopped").Invokes(() => polled.TrySetResult());
+
+        await polled.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        GetRequest("status").MustHaveHappenedTwiceOrMore(); // once in the initial Connect(), and at least once in UpdateProperties()
+    }
+
+    [Fact]
+    public async Task Reconnect() {
+        await sousVide.Connect();
+        device.GattServerDisconnected += Raise.WithEmpty();
+
+        await sousVide.Connect();
+
+        A.CallTo(() => characteristic.StopNotificationsAsync()).MustHaveHappened();
+    }
+
+    [Fact]
+    public async Task TestDisposeAsync() {
         await sousVide.Connect();
         await sousVide.DisposeAsync();
 
@@ -127,18 +157,21 @@ public class AnovaPrecisionCookerTest {
     }
 
     [Fact]
-    public void Dispose() {
+    public void TestDispose() {
         sousVide.Dispose();
 
         A.CallTo(() => server.Disconnect()).MustHaveHappened();
     }
 
-    private void registerResponse(string request, string response) {
-        getRequest(request).Invokes(
-            () => characteristic.CharacteristicValueChanged += Raise.With(characteristic, new GattCharacteristicValueChangedEventArgs(Encoding.ASCII.GetBytes(response + '\r'))));
+    public void Dispose() {
+        sousVide.Dispose();
+        GC.SuppressFinalize(this);
     }
 
-    private IReturnValueArgumentValidationConfiguration<Task> getRequest(string request) =>
+    private IReturnValueConfiguration<Task> RegisterResponse(string request, string response) => GetRequest(request).Invokes(() => characteristic.CharacteristicValueChanged +=
+        Raise.With(characteristic, new GattCharacteristicValueChangedEventArgs(Encoding.ASCII.GetBytes(response + '\r'))));
+
+    private IReturnValueArgumentValidationConfiguration<Task> GetRequest(string request) =>
         A.CallTo(() => characteristic.WriteValueWithoutResponseAsync(A<byte[]>.That.IsSameSequenceAs(Encoding.ASCII.GetBytes(request + '\r'))));
 
 }

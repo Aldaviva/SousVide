@@ -12,6 +12,9 @@ public interface IBluetoothDevice {
     /// <inheritdoc cref="InTheHand.Bluetooth.BluetoothDevice.Gatt" />
     IRemoteGattServer Gatt { get; }
 
+    /// <inheritdoc cref="InTheHand.Bluetooth.BluetoothDevice.GattServerDisconnected" />
+    event EventHandler? GattServerDisconnected;
+
 }
 
 /// <inheritdoc />
@@ -27,5 +30,11 @@ public class BluetoothDevice(InTheHand.Bluetooth.BluetoothDevice device): IBluet
 
     /// <inheritdoc />
     public IRemoteGattServer Gatt => gattServer.Value;
+
+    /// <inheritdoc />
+    public event EventHandler? GattServerDisconnected {
+        add => device.GattServerDisconnected += value;
+        remove => device.GattServerDisconnected -= value;
+    }
 
 }

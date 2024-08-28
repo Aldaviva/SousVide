@@ -14,6 +14,9 @@ public interface IRemoteGattServer {
     /// <inheritdoc cref="InTheHand.Bluetooth.RemoteGattServer.Disconnect" />
     void Disconnect();
 
+    /// <inheritdoc cref="InTheHand.Bluetooth.RemoteGattServer.IsConnected" />
+    bool IsConnected { get; }
+
 }
 
 /// <inheritdoc />
@@ -28,5 +31,8 @@ public class RemoteGattServer(InTheHand.Bluetooth.RemoteGattServer server): IRem
 
     /// <inheritdoc />
     public void Disconnect() => server.Disconnect();
+
+    /// <inheritdoc />
+    public bool IsConnected => server.IsConnected;
 
 }
