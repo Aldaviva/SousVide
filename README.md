@@ -71,7 +71,7 @@ If you *still* want to control your Anova Precision Cooker over Bluetooth after 
 1. Plug in the sous vide.
 1. Press its Bluetooth button to enter pairing mode. It will turn blue and start blinking.
 1. Scan for the sous vide in the Bluetooth settings of your operating system.
-    - Windows 10
+    - Windows 10 (21H2 or later required because of BLE)
         1. Go to Settings › Devices › Bluetooth & other devices > Add Bluetooth or other device › Bluetooth.
         1. Select `Anova`.
     - Windows 11
