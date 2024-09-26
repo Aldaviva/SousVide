@@ -54,8 +54,8 @@ To be clear, **the ability to remotely control a sous vide is worthless**. There
 If you *still* want to control your Anova Precision Cooker over Bluetooth after 2025-09-28, you can try the following techniques until one works.
 1. Install an [older version of the app](https://apkpure.com/anova-culinary/com.anovaculinary.android/download/3.5.1) that still has the Bluetooth functionality.
 1. Use the [sample program](#command-line-tool) in this repository.
-1. Write your own .NET program using the [client library in this repository](#net-library).
-1. Don't write .NET? No problem. Write your own program in a language of your choice by following the [protocol specification](https://github.com/Aldaviva/SousVide/wiki/Communication-Protocol) in this repository.
+1. Write your own .NET application using the [client library in this repository](#net-library).
+1. Write your own application in a programming language of your choice by following the [protocol specification](https://github.com/Aldaviva/SousVide/wiki/Communication-Protocol) in this repository.
 1. [Inspect Bluetooth LE traffic](https://github.com/Aldaviva/SousVide/wiki/Bluetooth-Low-Energy-Interception) between your phone and sous vide to understand and implement the GATT communication protocol yourself &mdash; its design is misguided but simple, just RPC-style string writes and response callbacks used to read and write values and invoke functions.
 
 ## Prerequisites
@@ -72,7 +72,7 @@ If you *still* want to control your Anova Precision Cooker over Bluetooth after 
 1. Press its Bluetooth button to enter pairing mode. It will turn blue and start blinking.
 1. Scan for the sous vide in the Bluetooth settings of your operating system.
     - Windows 10 (21H2 or later required because of BLE)
-        1. Go to Settings › Devices › Bluetooth & other devices > Add Bluetooth or other device › Bluetooth.
+        1. Go to Settings › Devices › Bluetooth & other devices › Add Bluetooth or other device › Bluetooth.
         1. Select `Anova`.
     - Windows 11
         1. Go to Settings › Bluetooth & devices › Devices.
